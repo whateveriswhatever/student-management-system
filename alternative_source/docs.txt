@@ -1,0 +1,3 @@
+Sử dụng cấu trúc dữ liệu dạng vector để lưu học phần tiên quyết (cần phải hoàn thành trước khi đăng ký môn học nào đó) mà không phải dạng SET:
+    - Linh hoạt (có thể biểu diễn mức độ ưu tiên, môn nào trước thì dùng Queue còn theo chế độ tuần tự thì dùng Stack)
+    - Có thể sử dụng Linked List trong trường hợp này (sẽ hợp lý hơn trong trường hợp không dùng OOP)
