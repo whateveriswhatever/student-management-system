@@ -5,7 +5,7 @@
 #include <string>
 #include <queue>
 
-// --- Classes for Course and Student ---
+
 class Course {
 private:
     std::string courseCode;
@@ -255,7 +255,6 @@ namespace std {
 }
 
 
-// --- Example Usage ---
 int main() {
     /* Course object instances*/
     Course course1("INS2031", "Kĩ thuật điện", 0, {});
@@ -277,7 +276,7 @@ int main() {
 
     // Store students in a set for easy access
     std::vector<Course> courses = {course1, course2, course3, course4};
-    //std::unordered_set<Student> s;
+
     std::unordered_set<Student> students = {student1, student2, student3};
 
     // Login
