@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <vector>
 #include <string>
+#include <queue>
 
 // --- Classes for Course and Student ---
 class Course {
@@ -40,13 +41,14 @@ class Student {
 private:
     std::string studentID;
     std::string name;
-    std::unordered_map<std::string, std::vector<std::string>> courseHistory; // Course code -> Grades
+    std::unordered_map<std::string, std::queue<std::string>> courseHistory; // Course code -> Grades
 
 public:
     Student(std::string id, std::string studentName) : studentID(id), name(studentName) {}
 
+    /* Using Queue data structure to add the latest grade of the course (in case the student re-enrolled in the course to achieve higher final course grade) */
     void addCourseGrade(const std::string& courseCode, const std::string& grade) {
-        courseHistory[courseCode].push_back(grade);
+        courseHistory[courseCode].push(grade);
     }
 
     std::string getName() {return this->name;}
@@ -58,10 +60,18 @@ public:
             return false; // Never enrolled in the course
         }
 
-        const std::vector<std::string>& grades = courseHistory.at(courseCode);
-        std::string lastGrade = grades.back();
+        std::queue<std::string> gradesCopy = courseHistory.at(courseCode);
+        std::string lastGrade;
+
+        while (!gradesCopy.empty()) {
+            lastGrade = gradesCopy.front();
+            gradesCopy.pop();
+        }
+    
         return lastGrade == "C" || lastGrade == "B" || lastGrade == "A";
     }
+
+
 
     // Check if a student meets all prerequisites for a course
     bool meetsPrerequisites(const Course& course) const {
@@ -74,12 +84,30 @@ public:
     }
 
     void printCourseHistory() const {
-        std::cout << "Lịch sử đăng ký học của " << name << " (ID: " << studentID << "):\n";
-        for (const auto& [courseCode, grades] : courseHistory) {
-            std::cout << "  - " << courseCode << ": ";
-            for (const std::string& grade : grades) {
-                std::cout << grade << " ";
+
+        std::vector<std::pair<std::string, std::queue<std::string>>> sortedHistory(courseHistory.begin(), courseHistory.end());
+
+        // Using Bubble Sort to sort all the passed courses in lexicographical order
+        for (int i = 0; i < courseHistory.size(); i++) {
+            for (int j = 0; j < courseHistory.size() - 1; j++) {
+                if (sortedHistory[i].second > sortedHistory[j + 1].second) {
+                    std::swap(sortedHistory[j], sortedHistory[j + 1]);
+                }
             }
+        } 
+
+        std::cout << "Lịch sử đăng ký học của " << name << " (ID: " << studentID << "):\n";
+        for (auto& pair : sortedHistory) {
+            std::cout << "  - " << pair.first << ": ";
+
+            // Create a copy of the original Queue to display grades
+            std::queue<std::string> gradesCopy = pair.second;
+            
+            while (!gradesCopy.empty()) {
+                std::cout << gradesCopy.front() << " ";
+                gradesCopy.pop();
+            }
+
             std::cout << "\n";
         }
     }
@@ -118,16 +146,17 @@ public:
             return true;
         } else {
             std::cout << "Sinh viên " << student.getName() << " đã đăng ký môn học " << course.getCourseName()
-                      << " (hoặc đã qua môn học với số điểm yêu cầu)!!!.\n";
+                      << " và đã qua môn học với số điểm yêu cầu!!!.\n";
             return false;
         }
     }
 };
 
 void showAllCourses(std::unordered_map<std::string, Course> courses) {
+
     std::unordered_map<std::string, Course>::iterator itr;
     for (itr = courses.begin(); itr != courses.end(); itr++) {
-        std::cout << itr->first << " " << (itr->second).getCourseName() << std::endl;
+        std::cout << "[" << itr->first << "]" << " " << (itr->second).getCourseName() << std::endl;
         std::cout << "(*)Học phần tiên quyết: ";
         (itr->second).displayPrequesites();
         std::cout << "\n" << std::endl;
@@ -220,7 +249,7 @@ int main() {
     do {
         std::cout << "\n\n" << std::endl;
         showAllCourses(all_courses);
-        std::cout << "\n------------------------------------\n" << std::endl;
+        std::cout << "\n------------------------------------------------------------------------------------------------------------------\n" << std::endl;
         displayMenu();
         std::cin >> choice;
 
