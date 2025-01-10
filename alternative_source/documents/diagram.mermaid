@@ -1,0 +1,40 @@
+classDiagram
+    class Course {
+        -string courseCode
+        -string courseName
+        -vector<string> prerequisites
+        -int takenTimes
+        +Course(code, name, times, prereqs)
+        +addPrerequisite(prerequisiteCode)
+        +getCourseCode()
+        +getCourseName()
+        +getPrerequisites()
+        +getTakenTimes()
+        +increaseTakenTimes()
+        +displayPrerequisites()
+    }
+
+    class Student {
+        -string studentID
+        -string name
+        -unordered_map<string, queue<string>> courseHistory
+        +Student()
+        +Student(id, studentName)
+        +addCourseGrade(courseCode, grade)
+        +getName()
+        +getID()
+        +hasPassedCourse(courseCode)
+        +getFinalScoreOfCourse(courseCode)
+        +meetsPrerequisites(course)
+        +printCourseHistory()
+        +canEnroll(course)
+    }
+
+    class EnrollmentManager {
+        +enrollStudent(student, course)$
+    }
+
+    Student "1" --> "*" Course : can enroll in
+    Course "*" --> "*" Course : prerequisites
+    EnrollmentManager ..> Student : manages
+    EnrollmentManager ..> Course : manages
