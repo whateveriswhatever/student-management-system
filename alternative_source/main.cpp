@@ -5,6 +5,17 @@
 #include <string>
 #include <queue>
 
+// Add this hash function before the main() function
+// namespace std {
+//     template <>
+//     struct hash<Student> {
+//         size_t operator()(const Student& student) const {
+//             return hash<string>()(student.getID());
+//         }
+//     };
+// }
+
+
 // --- Classes for Course and Student ---
 class Course {
 private:
@@ -44,15 +55,20 @@ private:
     std::unordered_map<std::string, std::queue<std::string>> courseHistory; // Course code -> Grades
 
 public:
+    Student() = default;
     Student(std::string id, std::string studentName) : studentID(id), name(studentName) {}
+
+    bool operator==(const Student& other) const {
+        return studentID == other.studentID;
+    }
 
     /* Using Queue data structure to add the latest grade of the course (in case the student re-enrolled in the course to achieve higher final course grade) */
     void addCourseGrade(const std::string& courseCode, const std::string& grade) {
         courseHistory[courseCode].push(grade);
     }
 
-    std::string getName() {return this->name;}
-    std::string getID() {return this->studentID;}
+    std::string getName() const {return this->name;}
+    std::string getID() const {return this->studentID;}
 
     // Check if a student has passed a course with a sufficient grade
     bool hasPassedCourse(const std::string& courseCode) const {
@@ -68,9 +84,24 @@ public:
             gradesCopy.pop();
         }
     
-        return lastGrade == "C" || lastGrade == "B" || lastGrade == "A";
+        return lastGrade == "C" || lastGrade == "B" || lastGrade == "A" || lastGrade == "D";
     }
 
+    std::string getFinalScoreOfCourse(std::string courseCode) const {
+        if (courseHistory.find(courseCode) == courseHistory.end()) {
+            return ""; // Never enrolled in the course
+        }
+
+        std::queue<std::string> gradesCopy = courseHistory.at(courseCode);
+        std::string lastGrade;
+
+        while (!gradesCopy.empty()) {
+            lastGrade = gradesCopy.front();
+            gradesCopy.pop();
+        }
+
+        return lastGrade;
+    }
 
 
     // Check if a student meets all prerequisites for a course
@@ -113,15 +144,29 @@ public:
     }
 
     bool canEnroll(Course c) {
-        // Check if the student has already taken the course before
-        bool isPassed = this->hasPassedCourse(c.getCourseCode());
-
-        // If the student has ever take the course before and meets all the prerequisites => allowing enrollment
-        if (!isPassed && this->meetsPrerequisites(c)) return true;
-
+        std::string finalScore = this->getFinalScoreOfCourse(c.getCourseCode());
+        bool hasTakenCourse = !finalScore.empty();
+    
+        // Case 1: Student has never taken the course
+        if (!hasTakenCourse) {
+            return this->meetsPrerequisites(c);
+        }
+    
+        // Case 2: Student got a D and hasn't exceeded max attempts (2)
+        if (finalScore == "D" && c.getTakenTimes() < 2) {
+            return true;
+        }
+    
+        // Case 3: Student failed the course (F) and hasn't exceeded max attempts (2)
+        if (finalScore == "F" && c.getTakenTimes() < 2) {
+            return true;
+        }
+    
+        // All other cases (passed with C or better, or exceeded max attempts)
         return false;
     }
 };
+
 
 class EnrollmentManager {
 public:
@@ -163,6 +208,18 @@ void showAllCourses(std::unordered_map<std::string, Course> courses) {
     }
 }
 
+bool loginStudent(std::unordered_set<Student>& students, std::string& studentID, Student& currentStudent) {
+    for (Student student : students) {
+        if (student.getID() == studentID) {
+            currentStudent = student;
+            std::cout << "Đăng nhập thành công! Chào mừng " << student.getName() << "\n";
+            return true;
+        }
+    }
+    std::cout << "Mã sinh viên không tồn tại trong hệ thống!\n";
+    return false;
+}
+
 // Function to display the main menu
 void displayMenu() {
     std::cout << "=== Hệ thống đăng ký học ===\n";
@@ -199,6 +256,15 @@ void viewCourseHistory(const Student& student) {
     student.printCourseHistory();
 }
 
+namespace std {
+    template <>
+    struct hash<Student> {
+        size_t operator()(const Student& student) const noexcept {
+            return hash<string>()(student.getID());
+        }
+    };
+}
+
 
 // --- Example Usage ---
 int main() {
@@ -220,30 +286,23 @@ int main() {
         {"INS3181", course4}
     }; 
 
-    // // Add some grades to the student's course history
-    // student1.addCourseGrade(course1.getCourseCode(), "F"); 
-    
-
-    // // Print the course history
-    // student1.printCourseHistory();
-
-    // // Attempt to enroll the student in courses
-    // EnrollmentManager::enrollStudent(student1, course3); // Should succeed (prerequisite met)
-    // EnrollmentManager::enrollStudent(student1, course4); // Should fail (CS102 not passed)
-
-    // EnrollmentManager::enrollStudent(student1, course1);   
-    // student1.addCourseGrade(course1.getCourseCode(), "D");
-
-    // EnrollmentManager::enrollStudent(student1, course1); 
-    // student1.addCourseGrade(course1.getCourseCode(), "D");
-
-    // EnrollmentManager::enrollStudent(student1, course1);  
-    // student1.addCourseGrade(course1.getCourseCode(), "D");
-
-    // EnrollmentManager::enrollStudent(student1, course1);
-
-    // Store courses in a vector for easy access
+    // Store students in a set for easy access
     std::vector<Course> courses = {course1, course2, course3, course4};
+    //std::unordered_set<Student> s;
+    std::unordered_set<Student> students = {student1, student2, student3};
+
+    // Login
+    Student login_student;
+    std::string studentID;
+    bool isLoggedIn = false;
+
+    while (!isLoggedIn) {
+        std::cout << "=== Hệ thống đăng ký học ===\n";
+        std::cout << "Nhập mã sinh viên để đăng nhập: ";
+        std::cin >> studentID;
+        
+        isLoggedIn = loginStudent(students, studentID, login_student);
+    }
 
     int choice;
     do {
@@ -255,10 +314,10 @@ int main() {
 
         switch (choice) {
             case 1:
-                handleEnrollment(student1, courses);
+                handleEnrollment(login_student, courses);
                 break;
             case 2:
-                viewCourseHistory(student1);
+                viewCourseHistory(login_student);
                 break;
             case 3:
                 std::cout << "Thoát hệ thống đăng ký học thành công!\n";
