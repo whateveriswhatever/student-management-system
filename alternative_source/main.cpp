@@ -5,17 +5,6 @@
 #include <string>
 #include <queue>
 
-// Add this hash function before the main() function
-// namespace std {
-//     template <>
-//     struct hash<Student> {
-//         size_t operator()(const Student& student) const {
-//             return hash<string>()(student.getID());
-//         }
-//     };
-// }
-
-
 // --- Classes for Course and Student ---
 class Course {
 private:
