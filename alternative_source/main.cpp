@@ -253,8 +253,17 @@ int main() {
         {"INS3181", course4}
     }; 
 
-    std::vector<Course> courses = {course1, course2, course3, course4};
-    std::unordered_set<Student> students = {student1, student2, student3};
+    std::vector<Course> courses;
+    courses.push_back(course1);
+    courses.push_back(course2);
+    courses.push_back(course3);
+    courses.push_back(course4);
+
+    
+    std::unordered_set<Student> students;
+    students.insert(student1);
+    students.insert(student2);
+    students.insert(student3);
 
     Student login_student;
     std::string studentID;
