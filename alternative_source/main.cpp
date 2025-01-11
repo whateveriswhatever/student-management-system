@@ -5,64 +5,33 @@
 #include <string>
 #include <queue>
 
-
-class Course {
-private:
-    std::string courseCode;
-    std::string courseName;
-    std::vector<std::string> prerequisites; // List of prerequisite course codes
-    int takenTimes;
-
-public:
-    Course(std::string code, std::string name, int times = 0, std::vector<std::string> prereqs = {}) : 
-                courseCode(move(code)), courseName(move(name)), takenTimes(times), prerequisites(move(prereqs)) {}
-
-    void addPrerequisite(const std::string& prerequisiteCode) {
-        prerequisites.push_back(prerequisiteCode);
-    }
-
-    std::string getCourseCode() const { return courseCode; }
-    std::string getCourseName() const { return courseName; }
-    const std::vector<std::string>& getPrerequisites() const { return prerequisites; }
-    int getTakenTimes() const {return takenTimes;}
-
-    void increaseTakenTimes() {this->takenTimes++;}
-
-    void displayPrequesites() {
-        for (std::string prereq : this->getPrerequisites()) {
-            std::cout << prereq << ", ";
-        } 
-    }
-
-
-};
+// Forward declare Course for use in Student class
+class Course;
 
 class Student {
 private:
     std::string studentID;
     std::string name;
-    std::unordered_map<std::string, std::queue<std::string>> courseHistory; // Course code -> Grades
+    std::unordered_map<std::string, std::queue<std::string>> courseHistory;
 
 public:
     Student() = default;
-    Student(std::string id, std::string studentName) : studentID(id), name(studentName) {}
+    Student(std::string id, std::string studentName) : studentID(std::move(id)), name(std::move(studentName)) {}
 
     bool operator==(const Student& other) const {
         return studentID == other.studentID;
     }
 
-    /* Using Queue data structure to add the latest grade of the course (in case the student re-enrolled in the course to achieve higher final course grade) */
+    std::string getName() const { return name; }
+    std::string getID() const { return studentID; }
+
     void addCourseGrade(const std::string& courseCode, const std::string& grade) {
         courseHistory[courseCode].push(grade);
     }
 
-    std::string getName() const {return this->name;}
-    std::string getID() const {return this->studentID;}
-
-    // Check if a student has passed a course with a sufficient grade
     bool hasPassedCourse(const std::string& courseCode) const {
         if (courseHistory.find(courseCode) == courseHistory.end()) {
-            return false; // Never enrolled in the course
+            return false;
         }
 
         std::queue<std::string> gradesCopy = courseHistory.at(courseCode);
@@ -76,9 +45,9 @@ public:
         return lastGrade == "C" || lastGrade == "B" || lastGrade == "A" || lastGrade == "D";
     }
 
-    std::string getFinalScoreOfCourse(std::string courseCode) const {
+    std::string getFinalScoreOfCourse(const std::string& courseCode) const {
         if (courseHistory.find(courseCode) == courseHistory.end()) {
-            return ""; // Never enrolled in the course
+            return "";
         }
 
         std::queue<std::string> gradesCopy = courseHistory.at(courseCode);
@@ -92,22 +61,11 @@ public:
         return lastGrade;
     }
 
-
-    // Check if a student meets all prerequisites for a course
-    bool meetsPrerequisites(const Course& course) const {
-        for (const std::string& prereq : course.getPrerequisites()) {
-            if (!hasPassedCourse(prereq)) {
-                return false; // Missing a prerequisite
-            }
-        }
-        return true;
-    }
+    bool meetsPrerequisites(const Course& course) const;  // Forward declaration
 
     void printCourseHistory() const {
-
         std::vector<std::pair<std::string, std::queue<std::string>>> sortedHistory(courseHistory.begin(), courseHistory.end());
 
-        // Using Bubble Sort to sort all the passed courses in lexicographical order
         for (int i = 0; i < courseHistory.size(); i++) {
             for (int j = 0; j < courseHistory.size() - 1; j++) {
                 if (sortedHistory[i].second > sortedHistory[j + 1].second) {
@@ -117,55 +75,99 @@ public:
         } 
 
         std::cout << "Lịch sử đăng ký học của " << name << " (ID: " << studentID << "):\n";
-        for (auto& pair : sortedHistory) {
+        for (const auto& pair : sortedHistory) {
             std::cout << "  - " << pair.first << ": ";
 
-            // Create a copy of the original Queue to display grades
             std::queue<std::string> gradesCopy = pair.second;
-            
             while (!gradesCopy.empty()) {
                 std::cout << gradesCopy.front() << " ";
                 gradesCopy.pop();
             }
-
             std::cout << "\n";
         }
     }
 
-    bool canEnroll(Course c) {
-        std::string finalScore = this->getFinalScoreOfCourse(c.getCourseCode());
-        bool hasTakenCourse = !finalScore.empty();
-    
-        // Case 1: Student has never taken the course
-        if (!hasTakenCourse) {
-            return this->meetsPrerequisites(c);
+    bool canEnroll(const Course& c) const;  // Forward declaration
+};
+
+// Add hash specialization for Student after Student class definition
+namespace std {
+    template <>
+    struct hash<Student> {
+        size_t operator()(const Student& student) const noexcept {
+            return hash<string>()(student.getID());
         }
-    
-        // Case 2: Student got a D and hasn't exceeded max attempts (2)
-        if (finalScore == "D" && c.getTakenTimes() < 2) {
-            return true;
-        }
-    
-        // Case 3: Student failed the course (F) and hasn't exceeded max attempts (2)
-        if (finalScore == "F" && c.getTakenTimes() < 2) {
-            return true;
-        }
-    
-        // All other cases (passed with C or better, or exceeded max attempts)
-        return false;
+    };
+}
+
+class Course {
+private:
+    std::string courseCode;
+    std::string courseName;
+    std::vector<std::string> prerequisites;
+    int takenTimes;
+
+public:
+    Course(std::string code, std::string name, int times = 0, std::vector<std::string> prereqs = {}) : 
+        courseCode(std::move(code)), courseName(std::move(name)), 
+        takenTimes(times), prerequisites(std::move(prereqs)) {}
+
+    void addPrerequisite(const std::string& prerequisiteCode) {
+        prerequisites.push_back(prerequisiteCode);
+    }
+
+    std::string getCourseCode() const { return courseCode; }
+    std::string getCourseName() const { return courseName; }
+    const std::vector<std::string>& getPrerequisites() const { return prerequisites; }
+    int getTakenTimes() const { return takenTimes; }
+
+    void increaseTakenTimes() { this->takenTimes++; }
+
+    void displayPrequesites() const {
+        for (const std::string& prereq : prerequisites) {
+            std::cout << prereq << ", ";
+        } 
     }
 };
 
+// Implement the forward-declared methods
+bool Student::meetsPrerequisites(const Course& course) const {
+    for (const std::string& prereq : course.getPrerequisites()) {
+        if (!hasPassedCourse(prereq)) {
+            return false;
+        }
+    }
+    return true;
+}
 
+bool Student::canEnroll(const Course& c) const {
+    std::string finalScore = getFinalScoreOfCourse(c.getCourseCode());
+    bool hasTakenCourse = !finalScore.empty();
+
+    if (!hasTakenCourse) {
+        return meetsPrerequisites(c);
+    }
+
+    if (finalScore == "D" && c.getTakenTimes() < 2) {
+        return true;
+    }
+
+    if (finalScore == "F" && c.getTakenTimes() < 2) {
+        return true;
+    }
+
+    return false;
+}
+
+// Rest of the code remains the same...
 class EnrollmentManager {
 public:
     static bool enrollStudent(Student& student, Course& course) {
         if (!student.meetsPrerequisites(course)) {
             std::cout << "Đăng ký học không hợp lệ!!!" << std::endl;
-            for (std::string prereq : course.getPrerequisites()) {
+            for (const std::string& prereq : course.getPrerequisites()) {
                 std::cout << "Yêu cầu học phần tiên quyết: " << prereq << std::endl;
             }
-            
             return false;
         }
 
@@ -178,27 +180,25 @@ public:
             std::cout << "Sinh viên " << student.getName() << " đăng ký thành công môn học " << course.getCourseName() << std::endl;
             course.increaseTakenTimes();
             return true;
-        } else {
-            std::cout << "Sinh viên " << student.getName() << " đã đăng ký môn học " << course.getCourseName()
-                      << " và đã qua môn học với số điểm yêu cầu!!!.\n";
-            return false;
         }
+        
+        std::cout << "Sinh viên " << student.getName() << " đã đăng ký môn học " << course.getCourseName()
+                  << " và đã qua môn học với số điểm yêu cầu!!!.\n";
+        return false;
     }
 };
 
-void showAllCourses(std::unordered_map<std::string, Course> courses) {
-
-    std::unordered_map<std::string, Course>::iterator itr;
-    for (itr = courses.begin(); itr != courses.end(); itr++) {
-        std::cout << "[" << itr->first << "]" << " " << (itr->second).getCourseName() << std::endl;
+void showAllCourses(const std::unordered_map<std::string, Course>& courses) {
+    for (const auto& pair : courses) {
+        std::cout << "[" << pair.first << "]" << " " << pair.second.getCourseName() << std::endl;
         std::cout << "(*)Học phần tiên quyết: ";
-        (itr->second).displayPrequesites();
+        pair.second.displayPrequesites();
         std::cout << "\n" << std::endl;
     }
 }
 
-bool loginStudent(std::unordered_set<Student>& students, std::string& studentID, Student& currentStudent) {
-    for (Student student : students) {
+bool loginStudent(const std::unordered_set<Student>& students, const std::string& studentID, Student& currentStudent) {
+    for (const Student& student : students) {
         if (student.getID() == studentID) {
             currentStudent = student;
             std::cout << "Đăng nhập thành công! Chào mừng " << student.getName() << "\n";
@@ -209,7 +209,6 @@ bool loginStudent(std::unordered_set<Student>& students, std::string& studentID,
     return false;
 }
 
-// Function to display the main menu
 void displayMenu() {
     std::cout << "=== Hệ thống đăng ký học ===\n";
     std::cout << "1. Đăng ký học phần\n";
@@ -218,7 +217,6 @@ void displayMenu() {
     std::cout << "Chọn một tùy chọn: ";
 }
 
-// Function to handle user input for enrollment
 void handleEnrollment(Student& student, std::vector<Course>& courses) {
     std::string courseCode;
     std::cout << "Nhập mã học phần để đăng ký: ";
@@ -238,31 +236,12 @@ void handleEnrollment(Student& student, std::vector<Course>& courses) {
     std::cout << "Không tìm thấy học phần!\n";
 }
 
-
-
-// Function to handle viewing course history
-void viewCourseHistory(const Student& student) {
-    student.printCourseHistory();
-}
-
-namespace std {
-    template <>
-    struct hash<Student> {
-        size_t operator()(const Student& student) const noexcept {
-            return hash<string>()(student.getID());
-        }
-    };
-}
-
-
 int main() {
-    /* Course object instances*/
     Course course1("INS2031", "Kĩ thuật điện", 0, {});
     Course course2("INS2075", "Kĩ thuật điện tử", 0, {"INS2031"});
     Course course3("INS3135", "Mô phỏng thiết kế mạch", 0, {"INS2075"});
     Course course4("INS3181", "Hệ thống nhúng và vi điều khiển", 0, {"INS2075"});
 
-    /* Student object instances */
     Student student1("22071111", "Đào Đình Trung");
     Student student2("22071112", "Nhữ Quang Minh");
     Student student3("22071113", "Trần Mạnh Đức");
@@ -274,12 +253,9 @@ int main() {
         {"INS3181", course4}
     }; 
 
-    // Store students in a set for easy access
     std::vector<Course> courses = {course1, course2, course3, course4};
-
     std::unordered_set<Student> students = {student1, student2, student3};
 
-    // Login
     Student login_student;
     std::string studentID;
     bool isLoggedIn = false;
@@ -305,7 +281,7 @@ int main() {
                 handleEnrollment(login_student, courses);
                 break;
             case 2:
-                viewCourseHistory(login_student);
+                login_student.printCourseHistory();
                 break;
             case 3:
                 std::cout << "Thoát hệ thống đăng ký học thành công!\n";
@@ -314,4 +290,6 @@ int main() {
                 std::cout << "Lựa chọn không hợp lệ. Vui lòng thử lại.\n";
         }
     } while (choice != 3);
+
+    return 0;
 }
