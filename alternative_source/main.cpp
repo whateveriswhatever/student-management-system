@@ -68,10 +68,12 @@ public:
         std::vector<std::pair<std::string, std::queue<std::string>>> sortedHistory(courseHistory.begin(), courseHistory.end());
        
 
-        // Sort the vector based on the latest grade in the Queue using Bubble Sort
+        
         // std::sort(sortedHistory.begin(), sortedHistory.end(), [](const auto& a, const auto& b) {
         //     return a.second.back() < b.second.back();
         // });
+
+        // Sort the vector based on the latest grade in the Queue using Bubble Sort
         bool swapped;
         do {
             swapped = false;
