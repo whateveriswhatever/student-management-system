@@ -68,10 +68,22 @@ public:
         std::vector<std::pair<std::string, std::queue<std::string>>> sortedHistory(courseHistory.begin(), courseHistory.end());
        
 
-        // Sort the vector based on the latest grade in the Queue
-        std::sort(sortedHistory.begin(), sortedHistory.end(), [](const auto& a, const auto& b) {
-            return a.second.back() < b.second.back();
-        });
+        // Sort the vector based on the latest grade in the Queue using Bubble Sort
+        // std::sort(sortedHistory.begin(), sortedHistory.end(), [](const auto& a, const auto& b) {
+        //     return a.second.back() < b.second.back();
+        // });
+        bool swapped;
+        do {
+            swapped = false;
+            for (int i = 0; i < sortedHistory.size(); i++) {
+                if (!(sortedHistory[i].second).empty() && !(sortedHistory[i + 1].second).empty()) {
+                    if ((sortedHistory[i].second).back() > (sortedHistory[i + 1].second).back()) {
+                    std::swap(sortedHistory[i], sortedHistory[i + 1]);
+                    swapped = true;
+                }
+                }
+            }
+        } while (swapped);
 
         std::cout << "Lịch sử đăng ký học của " << name << " (ID: " << studentID << "):\n";
         for (const auto& pair : sortedHistory) {
