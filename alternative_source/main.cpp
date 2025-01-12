@@ -225,7 +225,7 @@ void handleEnrollment(Student& student, std::vector<Course>& courses) {
         if (course.getCourseCode() == courseCode) {
             if (EnrollmentManager::enrollStudent(student, course)) {
                 std::string grade;
-                std::cout << "Nhập điểm cho " << course.getCourseName() << "(F, D, C, B, A): ";
+                std::cout << "Nhập điểm cho môn học " << course.getCourseName() << " (F, D, C, B, A): ";
                 std::cin >> grade;
                 student.addCourseGrade(courseCode, grade);
             }
@@ -237,7 +237,7 @@ void handleEnrollment(Student& student, std::vector<Course>& courses) {
 
 int main() {
     Course course1("INS2031", "Kĩ thuật điện", 0, {});
-    Course course2("INS2075", "Ki thuật điện tử", 0, {"INS2031"});
+    Course course2("INS2075", "Kĩ thuật điện tử", 0, {"INS2031"});
     Course course3("INS3135", "Mô phỏng thiết kế mạch", 0, {"INS2075"});
     Course course4("INS3181", "Hệ thống nhúng và vi điều khiển", 0, {"INS2075"});
 
