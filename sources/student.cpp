@@ -91,3 +91,11 @@ public:
 
     bool canEnroll(const Course& c) const;  // Forward declaration
 };
+namespace std {
+    template <>
+    struct hash<Student> {
+        size_t operator()(const Student& student) const noexcept {
+            return hash<string>()(student.getID());
+        }
+    };
+}
