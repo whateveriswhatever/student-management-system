@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <queue>
+#include <algorithm>
 
 // Forward declare Course for use in Student class
 class Course;
@@ -41,7 +42,7 @@ public:
             lastGrade = gradesCopy.front();
             gradesCopy.pop();
         }
-    
+   
         return lastGrade == "C" || lastGrade == "B" || lastGrade == "A" || lastGrade == "D";
     }
 
@@ -65,14 +66,12 @@ public:
 
     void printCourseHistory() const {
         std::vector<std::pair<std::string, std::queue<std::string>>> sortedHistory(courseHistory.begin(), courseHistory.end());
+       
 
-        for (int i = 0; i < courseHistory.size(); i++) {
-            for (int j = 0; j < courseHistory.size() - 1; j++) {
-                if (sortedHistory[i].second > sortedHistory[j + 1].second) {
-                    std::swap(sortedHistory[j], sortedHistory[j + 1]);
-                }
-            }
-        } 
+        // Sort the vector based on the latest grade in the Queue
+        std::sort(sortedHistory.begin(), sortedHistory.end(), [](const auto& a, const auto& b) {
+            return a.second.back() < b.second.back();
+        });
 
         std::cout << "Lịch sử đăng ký học của " << name << " (ID: " << studentID << "):\n";
         for (const auto& pair : sortedHistory) {
@@ -108,8 +107,8 @@ private:
     int takenTimes;
 
 public:
-    Course(std::string code, std::string name, int times = 0, std::vector<std::string> prereqs = {}) : 
-        courseCode(std::move(code)), courseName(std::move(name)), 
+    Course(std::string code, std::string name, int times = 0, std::vector<std::string> prereqs = {}) :
+        courseCode(std::move(code)), courseName(std::move(name)),
         takenTimes(times), prerequisites(std::move(prereqs)) {}
 
     void addPrerequisite(const std::string& prerequisiteCode) {
@@ -126,7 +125,7 @@ public:
     void displayPrequesites() const {
         for (const std::string& prereq : prerequisites) {
             std::cout << prereq << ", ";
-        } 
+        }
     }
 };
 
@@ -164,7 +163,7 @@ class EnrollmentManager {
 public:
     static bool enrollStudent(Student& student, Course& course) {
         if (!student.meetsPrerequisites(course)) {
-            std::cout << "Đăng ký học không hợp lệ!!!" << std::endl;
+            std::cout << "Ðăng ký học không hợp lệ!!!" << std::endl;
             for (const std::string& prereq : course.getPrerequisites()) {
                 std::cout << "Yêu cầu học phần tiên quyết: " << prereq << std::endl;
             }
@@ -172,7 +171,7 @@ public:
         }
 
         if (course.getTakenTimes() >= 2) {
-            std::cout << "Đăng ký học không thành công (do quá số lần học lại cho phép tối đa 2 lần)!!!" << std::endl;
+            std::cout << "Ðang ký học không thành công (do quá số lần học lại cho phép tối da 2 lần)!!!" << std::endl;
             return false;
         }
 
@@ -181,9 +180,9 @@ public:
             course.increaseTakenTimes();
             return true;
         }
-        
-        std::cout << "Sinh viên " << student.getName() << " đã đăng ký môn học " << course.getCourseName()
-                  << " và đã qua môn học với số điểm yêu cầu!!!.\n";
+       
+        std::cout << "Sinh viên " << student.getName() << " đã dăng ký môn học " << course.getCourseName()
+                  << " và dã qua môn học với số diểm yêu cầu!!!.\n";
         return false;
     }
 };
@@ -201,7 +200,7 @@ bool loginStudent(const std::unordered_set<Student>& students, const std::string
     for (const Student& student : students) {
         if (student.getID() == studentID) {
             currentStudent = student;
-            std::cout << "Đăng nhập thành công! Chào mừng " << student.getName() << "\n";
+            std::cout << "Ðang nhập thành công! Chào mừng " << student.getName() << "\n";
             return true;
         }
     }
@@ -211,7 +210,7 @@ bool loginStudent(const std::unordered_set<Student>& students, const std::string
 
 void displayMenu() {
     std::cout << "=== Hệ thống đăng ký học ===\n";
-    std::cout << "1. Đăng ký học phần\n";
+    std::cout << "1. Ðăng ký học phần\n";
     std::cout << "2. Xem lịch sử đăng ký học\n";
     std::cout << "3. Thoát\n";
     std::cout << "Chọn một tùy chọn: ";
@@ -219,7 +218,7 @@ void displayMenu() {
 
 void handleEnrollment(Student& student, std::vector<Course>& courses) {
     std::string courseCode;
-    std::cout << "Nhập mã học phần để đăng ký: ";
+    std::cout << "Nhập mã học phần muốn đăng ký: ";
     std::cin >> courseCode;
 
     for (Course& course : courses) {
@@ -238,20 +237,20 @@ void handleEnrollment(Student& student, std::vector<Course>& courses) {
 
 int main() {
     Course course1("INS2031", "Kĩ thuật điện", 0, {});
-    Course course2("INS2075", "Kĩ thuật điện tử", 0, {"INS2031"});
+    Course course2("INS2075", "Ki thuật điện tử", 0, {"INS2031"});
     Course course3("INS3135", "Mô phỏng thiết kế mạch", 0, {"INS2075"});
     Course course4("INS3181", "Hệ thống nhúng và vi điều khiển", 0, {"INS2075"});
 
-    Student student1("22071111", "Đào Đình Trung");
+    Student student1("22071111", "Ðào Ðình Trung");
     Student student2("22071112", "Nhữ Quang Minh");
-    Student student3("22071113", "Trần Mạnh Đức");
+    Student student3("22071113", "Trần Mạnh Ðức");
 
     std::unordered_map<std::string, Course> all_courses = {
         {"INS2031", course1},
         {"INS2075", course2},
         {"INS3135", course3},
         {"INS3181", course4}
-    }; 
+    };
 
     std::vector<Course> courses;
     courses.push_back(course1);
@@ -259,7 +258,7 @@ int main() {
     courses.push_back(course3);
     courses.push_back(course4);
 
-    
+   
     std::unordered_set<Student> students;
     students.insert(student1);
     students.insert(student2);
@@ -271,9 +270,9 @@ int main() {
 
     while (!isLoggedIn) {
         std::cout << "=== Hệ thống đăng ký học ===\n";
-        std::cout << "Nhập mã sinh viên để đăng nhập: ";
+        std::cout << "Nhập mã số sinh viên để đăng nhập: ";
         std::cin >> studentID;
-        
+       
         isLoggedIn = loginStudent(students, studentID, login_student);
     }
 
